@@ -1,0 +1,445 @@
+
+from pygame import mixer 
+import pygame
+import os
+import sys
+import random
+
+path1 = os.path.basename(__file__)
+path= os.path.dirname(__file__)
+import time
+print(path)
+x = 0
+pygame.init()
+X = 1680
+Y = 1050
+pygame.display.set_caption('image')
+#scrn = pygame.display.set_mode((X, Y), pygame.FULLSCREEN)
+scrn = pygame.display.set_mode((X, Y))
+pygame.display.flip()
+global bounce3
+bounce3 = "A"
+global prevCheck
+prevCheck = 1
+start = time.time
+global allPlay
+numOfPlayers = 1 #create variable with value for sake "if" statements
+class player:
+    def __init__(self, name, hand):
+        self.name = name
+        self.hand = []
+    def assign_hand(self, hand):
+        self.hand.extend(hand)
+    def display_name(self):
+        print(self.name, "played...")
+    def display_hand(self):
+        print(self.hand)
+    def len_hand(self):
+        return(len(self.hand))
+#global variables for now
+deck = [2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7,8,8,8,8,9,9,9,9,10,10,10,10,11,11,11,11,12,12,12,12,13,13,13,13,14,14,14,14] #Deck
+P1 = player('Player 1', 'NA')
+P2 = player('Player 2', 'NA')
+P3 = player('Player 3', 'NA')
+P4 = player('Player 4', 'NA')
+Cpu1 = player('Cpu 1', 'NA')
+Cpu2 = player('Cpu 2', 'NA')
+Cpu3 = player('Cpu 3', 'NA')
+Cpu4 = player('Cpu 4', 'NA')
+Cpu5 = player('Cpu 5', 'NA')
+Cpu6 = player('Cpu 6', 'NA')
+Cpu7 = player('Cpu 7', 'NA')
+CPUS = [Cpu1,Cpu2,Cpu3,Cpu4,Cpu5,Cpu6,Cpu7]
+global turn
+
+compList = []
+River = []
+RP = 0
+
+#shuffling the deck
+random.shuffle(deck)
+#setting player hand
+def bounceon2(): #function to be used for animation 
+    check = time.time()
+    check = int(check)
+    #print(check)
+    if (check % 2 == 0): #b on even, a on odd to change once a second
+        return("B")
+    else:
+        return("A")
+def bounceon3(): # function to be used for animation 
+    global bounce3 
+    global prevCheck #variables cant be declared here becuase they need a value but if called here they would reset every time making the function usless 
+    check = time.time()
+    check = int(check)
+    if (check != prevCheck):  #check if the second has changed
+        if (bounce3 == "A"):#cycle through abc
+            bounce3 = "B"
+            prevCheck = check
+            return("B")
+        elif (bounce3 == "B"):
+            bounce3 = "C"
+            prevCheck = check
+            return("C")
+        elif (bounce3 == "C") :
+            bounce3 = "A"
+            prevCheck = check
+            return("A")
+        else:
+            return("error") #i dont know why this is here, it cant happen
+    else :
+        return(bounce3) #if the timers not different then it skips to here and passes the last value through without changing it 
+    
+def dealHand():
+    global allPlay
+    for x in range(6):
+        x = 0
+        for y in range(4):
+            y + 1
+            card = deck.pop(0)
+            allPlay[y].hand.insert(0, card)
+            allPlay[y].hand.sort()
+def display_table():
+    global GameCard
+    pygame.display.flip()
+    imp = pygame.image.load(f"{path}/table{bounceon3()}.png").convert()
+    imp = pygame.transform.scale(imp, (1680, 1050))
+    scrn.blit(imp, (0, 0) ) 
+    imp = pygame.image.load(f"{path}/cards/gurkacard{GameCard}.png").convert_alpha()
+    imp = pygame.transform.scale(imp, (104, 182))
+    scrn.blit(imp, (100, 100) ) 
+def pickCard(): #call function for card input because animation loops need to be removed from main loop 
+    pick = True
+    global allPlay
+    global turn
+    cpick = 1
+    handsize = (allPlay[turn]).len_hand()
+    while pick == True:
+        
+        for event in pygame.event.get(): #keydown event dectect 
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_KP1:
+                    cpick = 1
+                if event.key == pygame.K_KP2:
+                    if handsize >= 2:
+                        cpick = 2
+                    else:
+                        pass
+                if event.key == pygame.K_KP3:
+                    if handsize >= 3:
+                        cpick = 3
+                    else:
+                        pass
+                if event.key == pygame.K_KP4:
+                    if handsize >= 4:
+                        cpick = 4
+                    else:
+                        pass
+                if event.key == pygame.K_KP5:
+                    if handsize >= 5:
+                        cpick = 5
+                    else:
+                        pass
+                if event.key == pygame.K_KP6:
+                    if handsize >= 6:
+                        cpick = 6
+                    else:
+                        pass
+                if event.key == pygame.K_KP_ENTER:
+                    pick = False
+                if event.key == pygame.K_ESCAPE: 
+                    imp = pygame.image.load(f"calling image path that cant exits so the code errors and ends the program which is what i wanted anyway.png").convert()
+                print(f"card slot selected: {cpick}")
+    return(cpick-1)
+def rotation_p():
+    global allPlay
+    global turn
+    global GameCard
+    y = True
+    t = False
+    f = False
+    over = 0
+    up = 0
+
+    dealHand()
+    pygame.display.flip()
+    imp = pygame.image.load(f"{path}/table{bounceon3()}.png").convert()
+    imp = pygame.transform.scale(imp, (1680, 1050))
+    scrn.blit(imp, (0, 0) ) 
+    allAt = allPlay[:]
+    while y == True :
+        turn = 0
+        over += 1
+        River.clear()
+        LeaderCard = 0
+        for x in range(3):
+            print(x)
+            if (P1 in allAt):
+                if (allAt.index(P1) == turn):
+                    print("\n"*5," Player 1:")
+                    print("Pick the card you'd like to play.")
+                    print("The river is",River,"\nThe Leader card is",LeaderCard)
+                    P1.display_hand()
+                    '''#GC = int(input())
+                    C = P1.hand.index(GC)'''
+                    C = int(pickCard())
+                    GameCard = P1.hand.pop(C)
+                    print(f"card played: {GameCard}")
+                    if (GameCard >= LeaderCard):
+                        LeaderCard = GameCard
+                        turn += 1
+                        DRP = turn
+                        win = DRP
+                    elif (GameCard < LeaderCard):
+                        print("Invalid, playing your lowest card.")
+                        P1.hand.insert(0, GameCard)
+                        P1.hand.sort()
+                        GameCard = P1.hand.pop(0)
+                        turn += 1
+                    River.insert(0, GameCard)
+                    
+            if (P2 in allAt):
+                if (allAt.index(P2) == turn):
+                    print("\n"*5,"Player 2\nPick the card you'd like to play.")
+                    print("The river is",River,"\nThe Leader card is",LeaderCard)
+                    P2.display_hand()
+                    '''#GC = int(input())
+                    C = P2.hand.index(GC)'''
+                    C = int(pickCard())
+                    print(C)
+                    GameCard = P2.hand.pop(C)
+                    if (GameCard >= LeaderCard): 
+                        LeaderCard = GameCard
+                        turn += 1
+                        DRP = turn
+                        win = DRP
+                    elif (GameCard < LeaderCard):
+                        print("Invalid, playing your lowest card.")
+                        P2.hand.insert(0, GameCard)
+                        P2.hand.sort()
+                        GameCard = P2.hand.pop(0)
+                        turn += 1
+                    River.insert(0, GameCard)
+                    
+            if (P3 in allAt):
+                if (allAt.index(P3) == turn):
+                    
+                    print("\n"*5,"Player 3\nPick the card you'd like to play.")
+                    print("The river is",River,"\nThe Leader card is",LeaderCard)
+                    P3.display_hand()
+                    '''#GC = int(input())
+                    C = P3.hand.index(GC)'''
+                    C = int(pickCard())
+                    print(C)
+                    GameCard = P3.hand.pop(C)
+                    if (GameCard >= LeaderCard):
+                        LeaderCard = GameCard
+                        turn += 1
+                        DRP = turn
+                        win = DRP
+                    elif (GameCard < LeaderCard):
+                        print("Invalid, playing your lowest card.")
+                        P3.hand.insert(0, GameCard)
+                        P3.hand.sort()
+                        GameCard = P3.hand.pop(0)
+                        turn += 1
+                    River.insert(0, GameCard)
+                    
+            if (P4 in allAt):
+                if (allAt.index(P4) == turn):
+                    print("\n"*5,"Player 4\nPick the card you'd like to play.")
+                    print("The river is",River,"\nThe Leader card is",LeaderCard)
+                    P4.display_hand()
+                    '''#GC = int(input())
+                    C = P4.hand.index(GC)'''
+                    C = int(pickCard())
+                    print(C)
+                    GameCard = P4.hand.pop(C)
+                    if (GameCard >= LeaderCard):
+                        LeaderCard = GameCard
+                        turn += 1
+                        DRP = turn
+                        win = DRP
+                    elif (GameCard < LeaderCard):
+                        print("Invalid, playing your lowest card.")
+                        P4.hand.insert(0, GameCard)
+                        P4.hand.sort()
+                        GameCard = P4.hand.pop(0)
+                        turn += 1
+                    River.insert(0, GameCard)
+                    
+            elif(turn < 4):
+                GameCard = allAt[turn].hand.pop(-1)
+                if (GameCard >= LeaderCard):
+                    LeaderCard = GameCard
+                    River.insert(-1, GameCard)
+                    DRP = turn
+                    win = DRP
+                    print(f"{allPlay[DRP].display_name()}{GameCard}!")
+                    turn += 1
+                elif (GameCard < LeaderCard):
+                    allAt[turn].hand.insert(0, GameCard)
+                    allAt[turn].hand.sort()
+                    GameCard = allAt[turn].hand.pop( 0 )
+                    River.insert(0, GameCard)
+                    DRP = turn 
+                    print(River)
+                    turn += 1
+                print("The river is",River,"\nThe Leader card is",LeaderCard)
+                print(f"{allPlay[DRP].display_name()}{GameCard}!")
+
+        
+
+        print(win, "is the leader\nList 1")
+        for players in range(len(allAt)):
+            print(allAt[players].name)
+        for move in range(win-1):
+            playerMove = allAt.pop(0)
+            playerMove.name
+            allAt.insert(4,playerMove)
+        
+        print("New List")
+        for players in range(len(allAt)):
+            print(allAt[players].name)
+        x = 0
+
+        if (over == 5):
+            y = False
+            t = True
+        while t == True:
+            winCheck = allAt[up].hand.pop()
+            compList.insert(0, winCheck)
+            up = up + 1
+            if (up == 4):
+                t = False
+                f = True
+        while f == True:
+            allPlay.reverse()
+            print(compList)
+            compList.index
+            minpos = compList.index(min(compList))
+            print (minpos)
+            for player in range(len(allPlay)):
+                print("\n",allPlay[player].name)
+                allPlay[player].display_hand()
+            print(allPlay[minpos].name,"had won")
+            quit()
+
+def main():
+    global allPlay 
+    global numPlay
+    numPlay = selectPlayers()
+    print(f"numplay{numPlay}")
+    if (numPlay == 1):
+        allPlay = [P1,Cpu1,Cpu2,Cpu3]
+    if (numPlay == 2):
+        allPlay = [P1,P2,Cpu1,Cpu2]
+    if (numPlay == 3):
+        allPlay = [P1,P2,P3,Cpu1]
+    if (numPlay == 4):
+        allPlay = [P1,P2,P3,P4]
+    for see in range(len(allPlay)):
+        print(allPlay[see].name)
+
+def selectPlayers():
+    global numOfPlayers
+    playerSelectLoop = True
+    while playerSelectLoop == True:
+        pygame.display.flip()
+        imp = pygame.image.load(f"{path}/playerselect{numOfPlayers}{bounceon2()}.png").convert()
+        imp = pygame.transform.scale(imp, (1680, 1050))
+        scrn.blit(imp, (0, 0) )
+        for event in pygame.event.get(): #keydown event dectect 
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_DOWN:
+                    if (numOfPlayers < 4): #cap player variable at 4
+                        numOfPlayers = numOfPlayers +1
+                    else:
+                        pass
+                if event.key == pygame.K_UP:
+                    if (numOfPlayers > 1): # stop players from being less than one
+                        numOfPlayers = numOfPlayers -1
+                if event.key == pygame.K_KP_ENTER:
+                    playerSelectLoop = False
+                if event.key == pygame.K_ESCAPE: 
+                    imp = pygame.image.load(f"calling image path that cant exits so the code errors and ends the program which is what i wanted anyway.png").convert()
+    return(numOfPlayers)
+
+def rules():
+    rulesDisplay = True
+    while rulesDisplay == True:
+        pygame.display.flip()
+        imp = pygame.image.load(f"{path}/rules{bounceon2()}.png").convert()
+        imp = pygame.transform.scale(imp, (1680, 1050))
+        scrn.blit(imp, (0, 0) ) 
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_KP_ENTER:
+                    rulesDisplay = False
+def credits():
+    creditsDisplay = True
+    while creditsDisplay == True:
+        pygame.display.flip()
+        imp = pygame.image.load(f"{path}/credits{bounceon2()}.png").convert()
+        imp = pygame.transform.scale(imp, (1680, 1050))
+        scrn.blit(imp, (0, 0) ) 
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_KP_ENTER:
+                    creditsDisplay = False
+                if event.key == pygame.K_KP_PLUS:
+                    print("swedish verion still in development\nplease try again later")
+
+def leaderboard():
+    leaderboardDisplay = True
+    while leaderboardDisplay == True:
+        #leaderboard images go here 
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_KP_ENTER:
+                    leaderboardDisplay = False
+def gamelogic(): #dont know why this is here
+    gameDisplay = True
+    while gameDisplay == True:
+        pygame.display.flip()
+        imp = pygame.image.load(f"{path}/table{bounceon3()}.png").convert()
+        imp = pygame.transform.scale(imp, (1680, 1050))
+        scrn.blit(imp, (0, 0) ) 
+        for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_KP_ENTER:
+                        pygame.display.flip()
+                    if event.key == pygame.K_ESCAPE:
+                        gameDisplay = False
+def menu():
+    #starts music. commented out for now because its still plays the soviet anthem
+    '''mixer.music.load(f"{path}/theme.mp3") 
+    mixer.music.set_volume(1) 
+    mixer.music.play()'''
+    menuLoop = True
+    while menuLoop == True:
+        pygame.display.flip()
+        imp = pygame.image.load(f"{path}/menu{bounceon3()}.png").convert()
+        imp = pygame.transform.scale(imp, (1680, 1050))
+        scrn.blit(imp, (0, 0) ) 
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_KP1:
+                    #leaderboard
+                    leaderboard()
+                    print("leaderboard")
+                if event.key == pygame.K_KP2:
+                    rules()
+                    print("rules")
+                if event.key == pygame.K_KP_ENTER:
+                    main()
+                    rotation_p()
+                    gamelogic()#not sure ab this yet
+
+                if event.key == pygame.K_KP3:
+                    credits()
+                    print("credits")
+                if event.key == pygame.K_ESCAPE: 
+                    imp = pygame.image.load(f"calling image path that cant exist so the code errors and ends the program which is what i wanted anyway.png").convert()
+        
+menu()
